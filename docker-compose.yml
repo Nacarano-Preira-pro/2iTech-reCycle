@@ -19,7 +19,7 @@ services:
       start_period: 30s
     environment:
       # Run "composer require symfony/orm-pack" to install and configure Doctrine ORM
-      DATABASE_URL: postgresql://${POSTGRES_USER:-symfony}:${POSTGRES_PASSWORD:-ChangeMe}@database:5432/${POSTGRES_DB:-app}?serverVersion=${POSTGRES_VERSION:-13}
+      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_ROOT_PASSWORD}@db5007599868.hosting-data.io/${MYSQL_DB}?serverVersion=${MYSQL_VERSION}
       # Run "composer require symfony/mercure-bundle" to install and configure the Mercure integration
       MERCURE_URL: ${CADDY_MERCURE_URL:-http://caddy/.well-known/mercure}
       MERCURE_PUBLIC_URL: https://${SERVER_NAME:-localhost}/.well-known/mercure
@@ -54,13 +54,31 @@ services:
         published: ${HTTP3_PORT:-443}
         protocol: udp
 
-# Mercure is installed as a Caddy module, prevent the Flex recipe from installing another service
-###> symfony/mercure-bundle ###
-###< symfony/mercure-bundle ###
+  # Mercure is installed as a Caddy module, prevent the Flex recipe from installing another service
+  ###> symfony/mercure-bundle ###
+  ###< symfony/mercure-bundle ###
+
+  ###> doctrine/doctrine-bundle ###
+  database:
+    image: mysql:${MYSQL_VERSION}
+    environment:
+      MYSQL_DB: ${MYSQL_DB}
+      # You should definitely change the password in production
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+    volumes:
+      - db-data:/var/lib/mysql
+      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+      # - ./docker/db/data:/var/lib/postgresql/data:rw
+      ###< doctrine/doctrine-bundle ###
 
 volumes:
   php_socket:
   caddy_data:
-  caddy_config:
-###> symfony/mercure-bundle ###
-###< symfony/mercure-bundle ###
+  caddy_config: ###> symfony/mercure-bundle ###
+
+  ###< symfony/mercure-bundle ###
+
+  ###> doctrine/doctrine-bundle ###
+  db-data: ###< doctrine/doctrine-bundle ###
